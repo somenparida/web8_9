@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await API.post('/auth/register', userData);
-      
+
       const { token, user } = response.data;
       localStorage.setItem('token', token);
       API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -72,4 +72,30 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.message |
+        message: error.response?.data?.message || 'Registration failed'
+      };
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    delete API.defaults.headers.common['Authorization'];
+    setUser(null);
+  };
+
+  const value = {
+    user,
+    login,
+    register,
+    logout,
+    loading
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export default AuthContext;

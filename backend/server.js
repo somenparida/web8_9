@@ -14,27 +14,34 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-// ✅ Allowed origins for CORS
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://web8-9-1.onrender.com' // <-- your deployed frontend
-];
+// ✅ Allowed origins for CORS (supports comma-separated env var)
+const allowedOrigins = (
+  process.env.ALLOWED_ORIGINS || process.env.CLIENT_URL || ''
+)
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 
-// ✅ CORS Middleware
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('CORS not allowed from this origin: ' + origin));
-      }
-    },
-    credentials: true,
-  })
-);
+// Always include localhost for local dev
+if (!allowedOrigins.includes('http://localhost:3000')) {
+  allowedOrigins.push('http://localhost:3000');
+}
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('CORS not allowed from this origin: ' + origin));
+  },
+  credentials: true,
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+// Preflight and CORS middleware
+app.options('*', cors(corsOptions));
+app.use(cors(corsOptions));
 
 // Middleware
 app.use(express.json());
@@ -65,6 +72,7 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     database:
       mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+    allowedOrigins
   });
 });
 
@@ -89,4 +97,8 @@ app.listen(PORT, () => {
       mongoose.connection.readyState === 1 ? 'Connected' : 'Not Connected'
     }`
   );
+  if (!process.env.JWT_SECRET) {
+    console.warn('⚠️  JWT_SECRET is not set. Token generation will fail.');
+  }
+  console.log('✅ Allowed CORS origins:', allowedOrigins);
 });

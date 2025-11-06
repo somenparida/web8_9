@@ -14,11 +14,29 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
+// ✅ Allowed origins for CORS
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://web8-9-1.onrender.com' // <-- your deployed frontend
+];
+
+// ✅ CORS Middleware
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('CORS not allowed from this origin: ' + origin));
+      }
+    },
+    credentials: true,
+  })
+);
+
 // Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
-}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -27,25 +45,26 @@ app.use('/api/auth', authRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: '🌱 Smart Agriculture Monitoring System API',
     version: '1.0.0',
     endpoints: {
       auth: {
         register: 'POST /api/auth/register',
         login: 'POST /api/auth/login',
-        getProfile: 'GET /api/auth/me'
-      }
-    }
+        getProfile: 'GET /api/auth/me',
+      },
+    },
   });
 });
 
 // Health check route
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
-    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+    database:
+      mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
   });
 });
 
@@ -56,8 +75,8 @@ app.use('*', (req, res) => {
 
 // Error handling middleware
 app.use((error, req, res, next) => {
-  console.error('Error:', error);
-  res.status(500).json({ message: 'Something went wrong!' });
+  console.error('Error:', error.message);
+  res.status(500).json({ message: error.message || 'Something went wrong!' });
 });
 
 const PORT = process.env.PORT || 5000;
@@ -65,5 +84,9 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 MongoDB: ${process.env.MONGODB_URI ? 'Connected' : 'Not configured'}`);
+  console.log(
+    `🔗 MongoDB: ${
+      mongoose.connection.readyState === 1 ? 'Connected' : 'Not Connected'
+    }`
+  );
 });

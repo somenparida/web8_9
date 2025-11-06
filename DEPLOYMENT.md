@@ -36,6 +36,7 @@ Backend (Node web service)
 - Environment variables: add these values in Render's Environment section:
   - MONGODB_URI = (your MongoDB Atlas connection string)
   - JWT_SECRET = (a long random secret)
+  - ALLOWED_ORIGINS = https://<your-frontend>.onrender.com,http://localhost:3000
   - EMAIL_USER = (if used)
   - EMAIL_PASS = (if used)
   - NODE_ENV = production
@@ -51,7 +52,8 @@ Frontend (Static Site)
 - Build command: `npm run build`
 - Publish directory: `dist`
 
-- Environment variables: If your frontend makes API calls to the backend, set the client environment variable (or configure at runtime) for the API base URL. You can set `VITE_API_URL` in Render and reference it in the frontend via `import.meta.env.VITE_API_URL`.
+- Environment variables: If your frontend makes API calls to the backend, set the client environment variable (or configure at runtime) for the API base URL. You can set `VITE_API_URL` in Render and reference it in the frontend via `import.meta.env.VITE_API_URL`. Example:
+  - VITE_API_URL = https://<your-backend>.onrender.com/api
 
 4) Notes and troubleshooting
 
